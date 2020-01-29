@@ -32,4 +32,21 @@ def _parse_message(raw_message: str) -> Message:
             "например: \n 10 такси")
     amount = regexp_result.group(1).replace("", "")
     category_text = regexp_result.group(2).strip().lower()
-    return Message(amount=amount,category_text=category_text)
+    return Message(amount=amount, category_text=category_text)
+
+
+def _get_now_datetime():
+    """Returns today datetime in Warsaw timezone"""
+    timezone = pytz.timezone("Europe/Warsaw")
+    now = datetime.datetime.now(timezone)
+    return now
+
+
+def _get_date_formatted() -> str:
+    """ Returns nowadate as string"""
+    return _get_now_datetime().strftime("%Y-%m-%d")
+
+
+def _get_budget_limit() -> int:
+    """Returns daily lime for main bases expenses"""
+    return db.fetchall("budget", ["daily_limit"])[0]["daily_limit"]

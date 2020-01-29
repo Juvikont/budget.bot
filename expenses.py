@@ -50,3 +50,51 @@ def _get_date_formatted() -> str:
 def _get_budget_limit() -> int:
     """Returns daily lime for main bases expenses"""
     return db.fetchall("budget", ["daily_limit"])[0]["daily_limit"]
+
+
+def delete_expense(row_id: str) -> None:
+    """Delete msg by its id"""
+    db.delete("expense", row_id)
+
+
+def add_expense(raw_message: str) -> Expense:
+    """Adding new expense from bot msg"""
+    parsed_message = _parse_message(raw_message)
+    category = Categories().get_category(parsed_message.category_text)
+    db.insert("expense", {
+        "sum": parsed_message.amount,
+        "created": _get_date_formatted(),
+        "category_codename": category.codename,
+        "message": raw_message
+    })
+    return Expense(amount=parsed_message.amount,
+                   category_name=category.name)
+
+
+def get_today_stats() -> str:
+    """Returns todays statistics as string"""
+    cursor = db.get_cursor()
+    cursor.execute(""
+                   "SELECT sum(sum)"
+                   "FROM expense WHERE created = current_date")
+    result = cursor.fetchone()
+    if not result[0]:
+        return "Сегодня ещё нет расходов"
+    all_today_expenses = result[0]
+    # Base expenses
+    cursor.execute(
+        "SELECT sum(sum)"
+        "FROM expense WHERE created=current_date "
+        "AND category_code_name IN "
+        "(SELECT code_name FROM categories "
+        "WHERE is_main_expense = true )")
+    result = cursor.fetchone()
+    main_today_expenses = result[0] if result[0] else 0
+    other_expenses = str(all_today_expenses - main_today_expenses)
+    return(
+        f"Сегодняшние расходы: \n"
+        f"Всего - {all_today_expenses} zl.\n"
+        f"Основные - {main_today_expenses} zl. из {_get_budget_limit()} zl. \n\n"
+        f"Прочие - {other_expenses}")
+
+

@@ -61,11 +61,11 @@ def add_expense(raw_message: str) -> Expense:
     """Adding new expense from bot msg"""
     parsed_message = _parse_message(raw_message)
     category = Categories().get_category(parsed_message.category_text)
-    db.insert("expense", {
-        "sum": parsed_message.amount,
+    inserted_row_id = db.insert("expense", {
+        "amount": parsed_message.amount,
         "created": _get_date_formatted(),
         "category_codename": category.codename,
-        "message": raw_message
+        "raw_text": raw_message
     })
     return Expense(amount=parsed_message.amount,
                    category_name=category.name)
@@ -74,9 +74,9 @@ def add_expense(raw_message: str) -> Expense:
 def get_today_stats() -> str:
     """Returns todays statistics as string"""
     cursor = db.get_cursor()
-    cursor.execute(""
-                   "SELECT sum(sum)"
-                   "FROM expense WHERE created = current_date")
+    cursor.execute(
+        "SELECT sum(sum)"
+        "FROM expense WHERE created=current_date")
     result = cursor.fetchone()
     if not result[0]:
         return "Сегодня ещё нет расходов"
@@ -91,10 +91,29 @@ def get_today_stats() -> str:
     result = cursor.fetchone()
     main_today_expenses = result[0] if result[0] else 0
     other_expenses = str(all_today_expenses - main_today_expenses)
-    return(
+    return (
         f"Сегодняшние расходы: \n"
         f"Всего - {all_today_expenses} zl.\n"
         f"Основные - {main_today_expenses} zl. из {_get_budget_limit()} zl. \n\n"
         f"Прочие - {other_expenses}")
 
 
+def last_expensies():
+    cursor = db.get_cursor()
+    cursor.execute(
+        "SELECT e.id, e.sum, c.name"
+        "FROM expense=e LEFT JOIN categories=c"
+        "ON c.code_name = e.category_codename"
+        "ORDER BY created DESC LIMIT 5")
+    rows = cursor.fetchall()
+    last_expenses = []
+    for row in rows:
+        last_expenses.append({
+            'sum': row[1],
+            'id': row[0],
+            'category_name': row[2]
+        })
+        return last_expenses
+
+
+add_expense('55 рублей')

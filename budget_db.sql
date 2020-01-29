@@ -29,7 +29,8 @@ values ('products', 'продукты', true, 'еда'),
        ('transport', 'общ.транспорт', true, 'автобус, троллейбус, метро'),
        ('taxi', 'такси', false, 'такси, убер, яндекс такси, lyft'),
        ('cell', 'телефон & интернет', true, 'телефон, интурнет, wifi, roaming'),
-       ('saas', 'подписки', false, 'yandex.music, подписки, hbo');
+       ('saas', 'подписки', false, 'yandex.music, подписки, hbo'),
+       ('other', 'прочее',true,'');
 
 insert into budget (code_name, daily_limit)
 values ('income', 1000);

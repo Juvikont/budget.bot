@@ -19,7 +19,7 @@ class Categories:
     def _load_categories(self) -> List[Category]:
         """Returns list of categories from DB"""
         categories = db.fetchall(
-            "categories", "codename name is_base_expense aliases".split()
+            "categories", "code_name name is_name_expense aliases".split()
         )
         categories = self._fill_aliases(categories)
         return categories
@@ -30,12 +30,12 @@ class Categories:
         for index, category in enumerate(categories):
             aliases = category["aliases"].split(",")
             aliases = list(filter(None, map(str.strip, aliases)))
-            aliases.append(category["codename"])
+            aliases.append(category["code_name"])
             aliases.append(category["name"])
             categories_result.append(Category(
-                codename=category['codename'],
+                codename=category['code_name'],
                 name=category['name'],
-                is_base_expense=category['is_base_expense'],
+                is_base_expense=category['is_main_expense'],
                 aliases=aliases
             ))
         return categories_result

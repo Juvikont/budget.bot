@@ -21,7 +21,7 @@ def insert(table: str, column_values: Dict):
 
 def fetchall(table: str, columns: List[str]) -> List[Tuple]:
     columns_joined = ', '.join(columns)
-    cursor.execute(f'SELECT{columns_joined}FROM{table}')
+    cursor.execute(f'SELECT {columns_joined} FROM {table}')
     rows = cursor.fetchall()
     result = []
     for i in rows:
@@ -30,9 +30,32 @@ def fetchall(table: str, columns: List[str]) -> List[Tuple]:
             dict[column] = i[index]
         result.append(dict)
 
+
+def delete(table: str, row_id: int) -> None:
+    row_id = int(row_id)
+    cursor.execute(f'DELETE FROM {table} WHERE id={row_id}')
+    conn.commit()
+
+
 def get_cursor():
     return cursor
 
+
 def _init_db():
-    with open('budget_db.sql','r') as f:
+    """ DB initialization"""
+    with open('budget_db.sql', 'r') as f:
         init = f.read()
+    cursor.executescript(init)
+    conn.commit()
+
+
+def check_db():
+    """Check if DB exists and if its not- create it"""
+    cursor.execute("SELECT name FROM sqlite_master "
+                   "WHERE type='table' AND name='expense'")
+    table_exists = cursor.fetchall()
+    if table_exists:
+        return
+    _init_db()
+
+check_db()

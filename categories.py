@@ -5,7 +5,7 @@ import db
 
 
 class Category(NamedTuple):
-    """Structure of category"""
+    """Structure of categories"""
     codename: str
     name: str
     is_base_expense: bool
@@ -19,23 +19,23 @@ class Categories:
     def _load_categories(self) -> List[Category]:
         """Returns list of categories from DB"""
         categories = db.fetchall(
-            "categories", "code_name name is_name_expense aliases".split()
+            "category", "codename name is_base_expense aliases".split()
         )
         categories = self._fill_aliases(categories)
         return categories
 
     def _fill_aliases(self, categories: List[Dict]) -> List[Category]:
-        """ Fill aliases for each category of aliases."""
+        """Fill aliases for each category of aliases."""
         categories_result = []
         for index, category in enumerate(categories):
             aliases = category["aliases"].split(",")
             aliases = list(filter(None, map(str.strip, aliases)))
-            aliases.append(category["code_name"])
+            aliases.append(category["codename"])
             aliases.append(category["name"])
             categories_result.append(Category(
-                codename=category['code_name'],
+                codename=category['codename'],
                 name=category['name'],
-                is_base_expense=category['is_main_expense'],
+                is_base_expense=category['is_base_expense'],
                 aliases=aliases
             ))
         return categories_result

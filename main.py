@@ -26,7 +26,7 @@ async def send_welcome(message: types.Message):
     print(message)
     await message.answer(
         "Бот для учёта финансов\n\n"
-        "Добавить расход: 250 такси\n"
+        "Добавить расход: 10 такси\n"
         "Сегодняшняя статистика: /today\n"
         "Последние внесённые расходы: /expenses\n"
         "Категории трат: /categories")

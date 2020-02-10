@@ -11,11 +11,11 @@ def insert(table: str, column_values: Dict):
     columns = ', '.join(column_values.keys())
     values = [tuple(column_values.values())]
     placeholders = ", ".join("?" * len(column_values.keys()))
-    cursor.executemany(
-        f"INSERT INTO {table} "
-        f"({columns}) "
-        f"VALUES ({placeholders})",
-        values)
+    print(table, values, columns, placeholders)
+    cursor.executemany(f"INSERT INTO {table} "
+                       f"({columns}) "
+                       f"VALUES ({placeholders})",
+                       values)
     conn.commit()
 
 
@@ -31,10 +31,12 @@ def fetchall(table: str, columns: List[str]) -> List[Tuple]:
         result.append(dict_row)
     return result
 
+#print(fetchall("category",['aliases']))
+
 
 def delete(table: str, row_id: int) -> None:
     row_id = int(row_id)
-    cursor.execute(f"delete from {table} where id={row_id}")
+    cursor.execute(f"DELETE FROM {table} where id={row_id}")
     conn.commit()
 
 
@@ -60,4 +62,5 @@ def check_db_exists():
     _init_db()
 
 
-check_db_exists()
+
+

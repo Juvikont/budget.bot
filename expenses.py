@@ -71,11 +71,11 @@ def add_expense(raw_message: str) -> Expense:
                    category_name=category.name)
 
 
-def get_today_stats() -> str:
+def get_today_statistics() -> str:
     """Returns todays statistics as string"""
     cursor = db.get_cursor()
     cursor.execute(
-        "SELECT sum(sum)"
+        "SELECT sum(amount)"
         "FROM expense WHERE created=current_date")
     result = cursor.fetchone()
     if not result[0]:
@@ -83,11 +83,11 @@ def get_today_stats() -> str:
     all_today_expenses = result[0]
     # Base expenses
     cursor.execute(
-        "SELECT sum(sum)"
+        "SELECT sum(amount)"
         "FROM expense WHERE created=current_date "
-        "AND category_code_name IN "
-        "(SELECT code_name FROM categories "
-        "WHERE is_main_expense = true )")
+        "AND category_codename IN "
+        "(SELECT codename FROM category "
+        "WHERE is_base_expense = true )")
     result = cursor.fetchone()
     main_today_expenses = result[0] if result[0] else 0
     other_expenses = str(all_today_expenses - main_today_expenses)
@@ -98,22 +98,22 @@ def get_today_stats() -> str:
         f"Прочие - {other_expenses}")
 
 
-def last_expensies():
+def last():
+    """Возвращает последние несколько расходов"""
     cursor = db.get_cursor()
     cursor.execute(
-        "SELECT e.id, e.sum, c.name"
-        "FROM expense=e LEFT JOIN categories=c"
-        "ON c.code_name = e.category_codename"
-        "ORDER BY created DESC LIMIT 5")
+        "select e.id, e.amount, c.name "
+        "from expense e left join category c "
+        "on c.codename=e.category_codename "
+        "order by created desc limit 10")
     rows = cursor.fetchall()
     last_expenses = []
     for row in rows:
         last_expenses.append({
-            'sum': row[1],
+            'amount': row[1],
             'id': row[0],
             'category_name': row[2]
         })
-        return last_expenses
+    return last_expenses
 
 
-add_expense('55 рублей')

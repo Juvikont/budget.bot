@@ -14,15 +14,7 @@ class Category(NamedTuple):
 
 class Categories:
     def __init__(self):
-        self._categories = self._load_categories()
-
-    def _load_categories(self) -> List[Category]:
-        """Returns list of categories from DB"""
-        categories = db.fetchall(
-            "category", "codename name is_base_expense aliases".split()
-        )
-        categories = self._fill_aliases(categories)
-        return categories
+        self._categories = self._load_expense()
 
     def _fill_aliases(self, categories: List[Dict]) -> List[Category]:
         """Fill aliases for each category of aliases."""
@@ -39,6 +31,14 @@ class Categories:
                 aliases=aliases
             ))
         return categories_result
+
+    def _load_expense(self) -> List[Category]:
+        """Returns list of expense table from DB"""
+        categories = db.fetchall(
+            "category", "codename name is_base_expense aliases".split()
+        )
+        categories = self._fill_aliases(categories)
+        return categories
 
     def get_all_categories(self) -> List[Dict]:
         return self._categories

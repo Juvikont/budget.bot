@@ -10,6 +10,7 @@ import exceptions
 from categories import Categories
 
 
+
 class Message(NamedTuple):
     """Unparsed message structure"""
     amount: int
@@ -19,7 +20,8 @@ class Message(NamedTuple):
 class Expense(NamedTuple):
     """Newly added expense structure"""
     amount: int
-    category_name: str
+    codename: str
+
 
 
 def _parse_message(raw_message: str) -> Message:
@@ -30,7 +32,7 @@ def _parse_message(raw_message: str) -> Message:
         raise exceptions.NotCorrectMessage(
             "Не могу распознать расход. Попробуйте написать в формате, "
             "например: \n 10 такси")
-    amount = regexp_result.group(1).replace("", "")
+    amount = int(regexp_result.group(1).replace("", ""))
     category_text = regexp_result.group(2).strip().lower()
     return Message(amount=amount, category_text=category_text)
 
@@ -57,38 +59,41 @@ def delete_expense(row_id: str) -> None:
     db.delete("expense", row_id)
 
 
-def add_expense(raw_message: str) -> Expense:
+def add_expense(raw_message: str, chat_id: int) -> Expense:
     """Adding new expense from bot msg"""
     parsed_message = _parse_message(raw_message)
     category = Categories().get_category(parsed_message.category_text)
-    inserted_row_id = db.insert("expense", {
+    db.insert("expense", {
         "amount": parsed_message.amount,
         "created": _get_date_formatted(),
-        "category_codename": category.codename,
-        "raw_text": raw_message
+        "codename": category.name,
+        "raw_text": raw_message,
+        "chat_id": chat_id
     })
     return Expense(amount=parsed_message.amount,
-                   category_name=category.name)
+                   codename=category.name)
 
 
-def get_today_statistics() -> str:
+def get_today_statistics(chat_id: int) -> str:
     """Returns todays statistics as string"""
     cursor = db.get_cursor()
-    cursor.execute(
+    chat = int(chat_id)
+    cursor.execute((
         "SELECT sum(amount)"
-        "FROM expense WHERE created=current_date")
+        "FROM expense WHERE created=current_date and chat_id =:chat"),{'chat': chat})
     result = cursor.fetchone()
     if not result[0]:
         return "Сегодня ещё нет расходов"
     all_today_expenses = result[0]
     # Base expenses
-    cursor.execute(
+    cursor.execute((
         "SELECT sum(amount)"
-        "FROM expense WHERE created=current_date "
-        "AND category_codename IN "
-        "(SELECT codename FROM category "
-        "WHERE is_base_expense = true )")
+        "FROM expense WHERE created=current_date and chat_id =:chat  "
+        "AND codename IN "
+        "(SELECT name FROM category "
+        "WHERE is_base_expense = true )"),{'chat': chat})
     result = cursor.fetchone()
+    print(result)
     main_today_expenses = result[0] if result[0] else 0
     other_expenses = str(all_today_expenses - main_today_expenses)
     return (
@@ -98,22 +103,25 @@ def get_today_statistics() -> str:
         f"Прочие - {other_expenses}")
 
 
-def last():
+def last(chat_id: int):
     """Возвращает последние несколько расходов"""
     cursor = db.get_cursor()
-    cursor.execute(
-        "select e.id, e.amount, c.name "
+    chat = int(chat_id)
+    cursor.execute((
+        "select e.id, e.amount,c.name,e.chat_id "
         "from expense e left join category c "
-        "on c.codename=e.category_codename "
-        "order by created desc limit 10")
+        "on c.name=e.codename where e.chat_id = :chat  "
+        "order by created  desc limit 10"),{'chat': chat})
     rows = cursor.fetchall()
+    print(chat)
     last_expenses = []
     for row in rows:
         last_expenses.append({
             'amount': row[1],
             'id': row[0],
-            'category_name': row[2]
+            'codename': row[2]
         })
     return last_expenses
 
-
+sum1 = Expense(amount=3,codename='black')
+print(sum1.amount)

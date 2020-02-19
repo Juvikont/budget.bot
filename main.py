@@ -19,17 +19,23 @@ bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
 
+def get_id(message: types.Message):
+    chat_id = message.from_user.id
+    return chat_id
+
+
 
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
     """"Sends Hi message"""
-    print(message)
+    # print(get_id(message))
     await message.answer(
         "Бот для учёта финансов\n\n"
         "Добавить расход: 10 такси\n"
         "Сегодняшняя статистика: /today\n"
         "Последние внесённые расходы: /expenses\n"
         "Категории трат: /categories")
+
 
 @dp.message_handler(lambda message: message.text.startswith('/del'))
 async def del_expense(message: types.Message):
@@ -44,15 +50,16 @@ async def del_expense(message: types.Message):
 async def categories_list(message: types.Message):
     """Отправляет список категорий расходов"""
     categories = Categories().get_all_categories()
-    answer_message = "Категории трат:\n\n* " +\
-            ("\n* ".join([c.name+' ('+", ".join(c.aliases)+')' for c in categories]))
+    answer_message = "Категории трат:\n\n* " + \
+                     ("\n* ".join([c.name + ' (' + ", ".join(c.aliases) + ')' for c in categories]))
     await message.answer(answer_message)
 
 
 @dp.message_handler(commands=['today'])
 async def today_statistics(message: types.Message):
+    chat_id = get_id(message)
     """Отправляет сегодняшнюю статистику трат"""
-    answer_message = expenses.get_today_statistics()
+    answer_message = expenses.get_today_statistics(chat_id)
     await message.answer(answer_message)
 
 
@@ -66,13 +73,14 @@ async def month_statistics(message: types.Message):
 @dp.message_handler(commands=['expenses'])
 async def list_expenses(message: types.Message):
     """Отправляет последние несколько записей о расходах"""
-    last_expenses = expenses.last()
+    chat_id = get_id(message)
+    last_expenses = expenses.last(chat_id)
     if not last_expenses:
         await message.answer("Расходы ещё не заведены")
         return
 
     last_expenses_rows = [
-        f"{row['amount']} руб. на {row['category_name']} —  нажми "
+        f"{row['amount']} руб. на {row['codename']} —  нажми "
         f"/del{row['id']} для удаления"
         for row in last_expenses]
     answer_message = "Последние сохранённые траты:\n\n* " + "\n\n* ".join(last_expenses_rows)
@@ -82,15 +90,17 @@ async def list_expenses(message: types.Message):
 @dp.message_handler()
 async def add_expense(message: types.Message):
     """Добавляет новый расход"""
+    chat_id = get_id(message)
     try:
-        expense = expenses.add_expense(message.text)
+        expense = expenses.add_expense(message.text,chat_id)
     except exceptions.NotCorrectMessage as e:
         await message.answer(str(e))
         return
     answer_message = (
-        f"Добавлены траты {expense.amount} руб на {expense.category_name}.\n\n"
-        f"{expenses.get_today_statistics()}")
+        f"Добавлены траты {expense.amount} руб на {expense.codename}.\n\n"
+        f"{expenses.get_today_statistics(chat_id)}")
     await message.answer(answer_message)
+
 
 @dp.inline_handler()
 async def inline_echo(inline_query: InlineQuery):

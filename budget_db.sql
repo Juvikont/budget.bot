@@ -14,9 +14,10 @@ create table expense(
     id integer primary key,
     amount integer,
     created date,
-    category_codename integer,
+    codename integer,
     raw_text text,
-    FOREIGN KEY(category_codename) REFERENCES category(codename)
+    chat_id integer,
+    FOREIGN KEY(codename) REFERENCES category(codename)
 );
 
 insert into category(codename, name, is_base_expense, aliases)
@@ -28,7 +29,7 @@ values ('products', 'продукты', true, 'еда'),
        ('taxi', 'такси', false, 'такси, убер, яндекс такси, lyft'),
        ('cell', 'телефон & интернет', true, 'телефон, интурнет, wifi, roaming'),
        ('saas', 'подписки', false, 'yandex.music, подписки, hbo'),
-       ('other', 'прочее',true,'');
+       ('other', 'прочее',false,'');
 
 insert into budget (codename, daily_limit)
 values ('income', 1000);

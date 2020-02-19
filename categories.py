@@ -16,6 +16,14 @@ class Categories:
     def __init__(self):
         self._categories = self._load_expense()
 
+    def _load_expense(self) -> List[Category]:
+        """Returns list of expense table from DB"""
+        categories = db.fetchall(
+            "category", "codename name is_base_expense aliases".split()
+        )
+        categories = self._fill_aliases(categories)
+        return categories
+
     def _fill_aliases(self, categories: List[Dict]) -> List[Category]:
         """Fill aliases for each category of aliases."""
         categories_result = []
@@ -32,13 +40,7 @@ class Categories:
             ))
         return categories_result
 
-    def _load_expense(self) -> List[Category]:
-        """Returns list of expense table from DB"""
-        categories = db.fetchall(
-            "category", "codename name is_base_expense aliases".split()
-        )
-        categories = self._fill_aliases(categories)
-        return categories
+
 
     def get_all_categories(self) -> List[Dict]:
         return self._categories
@@ -50,9 +52,10 @@ class Categories:
         for category in self._categories:
             if category.codename == "other":
                 other_category = category
-                for alias in category.aliases:
-                    if category_name in alias:
-                        finded = category
+            for alias in category.aliases:
+                if category_name in alias:
+                    finded = category
         if not finded:
             finded = other_category
         return finded
+
